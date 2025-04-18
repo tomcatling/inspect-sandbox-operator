@@ -1,0 +1,16 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+The operator has been deployed in the {{ .Values.namespace.name }} namespace.
+
+To verify that your operator is running, execute:
+
+  kubectl -n {{ .Values.namespace.name }} get pods
+
+To create a new InspectSandbox, use the following example:
+
+  kubectl apply -f https://raw.githubusercontent.com/tomcatling/inspect-operator/main/config/samples/inspect_v1alpha1_inspectsandbox.yaml
+
+For more information, check the documentation at:
+https://github.com/tomcatling/inspect-operator

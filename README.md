@@ -20,6 +20,23 @@ The operator follows the Kubernetes operator pattern to manage InspectSandbox re
 
 ### Installation
 
+#### Using Helm
+
+The recommended way to install the operator is using Helm:
+
+```bash
+# Add the Helm repository
+helm repo add inspect-operator https://tomcatling.github.io/inspect-operator/
+helm repo update
+
+# Install the operator
+helm install inspect-operator inspect-operator/inspect-sandbox-operator
+```
+
+For more information about the Helm chart, see the [Helm chart documentation](./helm-charts/inspect-sandbox-operator/README.md).
+
+#### Manual Installation
+
 1. Install the CRD:
 
 ```bash
