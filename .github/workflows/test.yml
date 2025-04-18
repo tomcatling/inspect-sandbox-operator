@@ -23,7 +23,7 @@ jobs:
             inspect-sandbox-operator \
             charts/inspect-sandbox-operator/ \
             --create-namespace \
-            --set deployment.image=inspect-sandbox-operator:latest 
+            --set deployment.image.repository=inspect-sandbox-operator:latest 
       
       # Wait for operator to be ready
       - name: Wait for operator deployment
