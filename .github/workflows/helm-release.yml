@@ -47,4 +47,4 @@ jobs:
           # Commit and push
           git add .
           git commit -m "Publish Helm chart"
-          git push origin gh-pages
+          git push --force origin gh-pages
