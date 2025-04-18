@@ -4,7 +4,7 @@ on:
   workflow_call:
 
 jobs:
-  pytest:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,4 +13,4 @@ jobs:
       - run: devcontainer exec --workspace-folder=. make docker-build
       - run: devcontainer exec --workspace-folder=. minikube image load inspect-sandbox-operator:latest 
       - run: devcontainer exec --workspace-folder=. helm install inspect-sandbox-operator charts/inspect-sandbox-operator/
-      - run: devcontainer exec --workspace-folder=. kubectl apply -f config/samples/inspect_v1alpha1_inspectsandbox.yaml
+      - run: devcontainer exec --workspace-folder=. kubectl apply -f examples/inspect_v1alpha1_inspectsandbox.yaml
