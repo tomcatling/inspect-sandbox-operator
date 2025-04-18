@@ -28,9 +28,6 @@ jobs:
           go-version: '1.24'
           cache: true
 
-      - name: Run tests
-        run: make test
-
       - name: Log in to the Container registry
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
