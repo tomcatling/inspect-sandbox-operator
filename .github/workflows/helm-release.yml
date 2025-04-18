@@ -29,31 +29,24 @@ jobs:
 
       - name: Setup Helm Chart Repository
         run: |
-          # Create required directories
-          mkdir -p .cr-release-packages
-          
           # Package the chart
-          helm package charts/inspect-sandbox-operator -d .cr-release-packages
+          helm package charts/inspect-sandbox-operator -d /tmp
           
-          # Check if helm-release branch exists
-          if git ls-remote --heads origin helm-release | grep -q 'refs/heads/helm-release'; then
+          # Check if helm-releases branch exists
+          if git ls-remote --heads origin helm-releases | grep -q 'refs/heads/helm-releases'; then
             # If it exists, check it out
-            git checkout helm-release
+            git checkout helm-releases
           else
             # If it doesn't exist, create a new orphan branch
-            git checkout --orphan helm-release
+            git checkout --orphan helm-releases
             git reset --hard
             rm -rf *
-            # Create an empty index.yaml to start with
-            touch index.yaml
-            git add index.yaml
-            git commit -m "Initialize helm-release branch"
           fi
           
           # Move the packaged chart to the current directory
-          cp .cr-release-packages/*.tgz .
+          cp /tmp/*.tgz .
           
-          # Merge the new chart into the existing index or create a new one if it doesn't exist
+          # Generate the index file (create new or merge with existing)
           if [ -f "index.yaml" ]; then
             helm repo index --url https://tomcatling.github.io/inspect-sandbox-operator/ --merge index.yaml .
           else
@@ -64,5 +57,5 @@ jobs:
           git add .
           git commit -m "Publish Helm chart $(date '+%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
           
-          # Push updates to helm-release branch
-          git push origin helm-release
+          # Push changes to helm-releases branch (not force push)
+          git push origin helm-releases
