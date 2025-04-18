@@ -60,7 +60,7 @@ spec:
       serviceAccountName: inspect-operator
       containers:
       - name: manager
-        image: ghcr.io/tomcatling/inspect-sandbox-provider:latest
+        image: ghcr.io/tomcatling/inspect-sandbox-operator:latest
         imagePullPolicy: IfNotPresent
         resources:
           limits:

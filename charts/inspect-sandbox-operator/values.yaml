@@ -9,7 +9,7 @@ namespace:
 deployment:
   replicas: 1
   image:
-    repository: ghcr.io/tomcatling/inspect-sandbox-provider
+    repository: ghcr.io/tomcatling/inspect-sandbox-operator
     tag: latest
     pullPolicy: IfNotPresent
   resources:

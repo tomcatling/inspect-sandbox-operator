@@ -9,6 +9,6 @@ entries:
     name: inspect-sandbox-operator
     type: application
     urls:
-    - https://github.com/tomcatling/inspect-sandbox-provider/charts/inspect-sandbox-operator-0.1.0.tgz
+    - https://github.com/tomcatling/inspect-sandbox-operator/charts/inspect-sandbox-operator-0.1.0.tgz
     version: 0.1.0
 generated: "2025-04-18T19:17:32.130640821+01:00"

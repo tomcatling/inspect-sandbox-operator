@@ -30,7 +30,7 @@ helm delete inspect-operator
 | namespace.create | bool | `true` | Create the namespace |
 | namespace.name | string | `"inspect-system"` | Namespace name |
 | deployment.replicas | int | `1` | Number of replicas |
-| deployment.image.repository | string | `"ghcr.io/tomcatling/inspect-sandbox-provider"` | Image repository |
+| deployment.image.repository | string | `"ghcr.io/tomcatling/inspect-sandbox-operator"` | Image repository |
 | deployment.image.tag | string | `"latest"` | Image tag |
 | deployment.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
 | deployment.resources.limits.cpu | string | `"100m"` | CPU limit |
