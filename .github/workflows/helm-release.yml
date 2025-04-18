@@ -35,7 +35,7 @@ jobs:
           helm package charts/inspect-sandbox-operator -d .cr-release-packages
           
           # Generate the index file
-          helm repo index .cr-release-packages --url https://tomcatling.github.io/inspect-operator/
+          helm repo index .cr-release-packages --url https://tomcatling.github.io/inspect-sandbox-operator/
           
           # Copy to gh-pages branch
           git checkout --orphan gh-pages || git checkout gh-pages
