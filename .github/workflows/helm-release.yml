@@ -55,19 +55,23 @@ jobs:
 
       - name: Setup Helm Chart Repository
         run: |
-          # Update chart version in Chart.yaml
-          sed -i "s/^version:.*/version: ${{ steps.extract-version.outputs.chart_version }}/" charts/inspect-sandbox-operator/Chart.yaml
+          # Create a temporary directory for chart modifications
+          mkdir -p /tmp/chart-work
+          cp -r charts/inspect-sandbox-operator /tmp/chart-work/
           
-          # Package the chart with the extracted version
-          helm package charts/inspect-sandbox-operator -d /tmp
+          # Update chart version in the temporary copy of Chart.yaml
+          sed -i "s/^version:.*/version: ${{ steps.extract-version.outputs.chart_version }}/" /tmp/chart-work/inspect-sandbox-operator/Chart.yaml
           
-          # Check if gh-pages branch exists
-          if git ls-remote --heads origin gh-pages | grep -q 'refs/heads/gh-pages'; then
+          # Package the chart with the extracted version using the temporary directory
+          helm package /tmp/chart-work/inspect-sandbox-operator -d /tmp
+          
+          # Check if helm-releases branch exists
+          if git ls-remote --heads origin helm-releases | grep -q 'refs/heads/helm-releases'; then
             # If it exists, check it out
-            git checkout gh-pages
+            git checkout helm-releases
           else
             # If it doesn't exist, create a new orphan branch
-            git checkout --orphan gh-pages
+            git checkout --orphan helm-releases
             git reset --hard
             rm -rf *
           fi
@@ -86,5 +90,5 @@ jobs:
           git add .
           git commit -m "Publish Helm chart $(date '+%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
           
-          # Push changes to gh-pages branch (not force push)
-          git push origin gh-pages
+          # Push changes to helm-releases branch (not force push)
+          git push origin helm-releases

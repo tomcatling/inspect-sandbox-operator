@@ -3,7 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     branches: [ "main" ]
-    tags: [ 'v*' ]
+    tags: [ 'v*', '*-release' ]
   pull_request:
     branches: [ "main" ]
 
@@ -21,12 +21,35 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
           cache: true
+
+      - name: Extract version from Git tag
+        id: extract-version
+        run: |
+          # Get the latest tag that matches our version pattern (v* or *-release)
+          LATEST_TAG=$(git describe --tags --abbrev=0 --match="v*" 2>/dev/null || git describe --tags --abbrev=0 --match="*-release" 2>/dev/null || echo "")
+          
+          if [ -z "$LATEST_TAG" ]; then
+            # If no tag found, use a fallback versioning scheme
+            COMMIT_COUNT=$(git rev-list --count HEAD)
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            VERSION="0.1.0-dev.${COMMIT_COUNT}+${SHORT_SHA}"
+            echo "No release tag found. Using generated version: $VERSION"
+          else
+            # Extract version number from tag (removing leading 'v' if present)
+            VERSION=$(echo $LATEST_TAG | sed 's/^v//' | sed 's/-release$//')
+            echo "Using version from tag: $VERSION"
+          fi
+          
+          # Set output for later steps
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -45,6 +68,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
+            type=raw,value=${{ steps.extract-version.outputs.version }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=ref,event=branch
@@ -59,5 +83,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ steps.extract-version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
