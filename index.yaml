@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  inspect-sandbox-operator:
+  - apiVersion: v2
+    appVersion: latest
+    created: "2025-04-18T19:17:32.131280155+01:00"
+    description: A Helm chart for the InspectSandbox Kubernetes Operator
+    digest: a55c7879e58a9fdd5c3b8cd1371a6b88282d5f111504fe35c7c1645d19e939b1
+    name: inspect-sandbox-operator
+    type: application
+    urls:
+    - https://github.com/tomcatling/inspect-sandbox-provider/charts/inspect-sandbox-operator-0.1.0.tgz
+    version: 0.1.0
+generated: "2025-04-18T19:17:32.130640821+01:00"

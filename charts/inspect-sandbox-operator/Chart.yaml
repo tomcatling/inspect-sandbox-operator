@@ -1,0 +1,6 @@
+apiVersion: v2
+name: inspect-sandbox-operator
+description: A Helm chart for the InspectSandbox Kubernetes Operator
+type: application
+version: 0.1.0
+appVersion: "latest"

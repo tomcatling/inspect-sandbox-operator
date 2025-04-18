@@ -1,0 +1,50 @@
+name: Release Helm Charts
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'charts/**'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.10.0
+
+      - name: Setup Helm Chart Repository
+        run: |
+          mkdir -p .cr-release-packages
+          mkdir -p .cr-index
+          
+          # Package the chart
+          helm package charts/inspect-sandbox-operator -d .cr-release-packages
+          
+          # Generate the index file
+          helm repo index .cr-release-packages --url https://tomcatling.github.io/inspect-operator/
+          
+          # Copy to gh-pages branch
+          git checkout --orphan gh-pages || git checkout gh-pages
+          git reset --hard
+          rm -rf *
+          cp .cr-release-packages/* .
+          cp .cr-release-packages/index.yaml .
+          
+          # Commit and push
+          git add .
+          git commit -m "Publish Helm chart"
+          git push origin gh-pages

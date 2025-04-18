@@ -1,0 +1,49 @@
+apiVersion: inspect.example.com/v1alpha1
+kind: InspectSandbox
+metadata:
+  name: sample-sandbox
+spec:
+  # Allow specific domains
+  allowDomains:
+    - "pypi.org"
+    - "files.pythonhosted.org"
+  
+  # Define networks for service isolation
+  networks:
+    default: "basic connectivity"
+  
+  # Define services to run in the sandbox
+  services:
+    default:
+      image: python:3.12-bookworm
+      runtimeClassName: CLUSTER_DEFAULT
+      command: ["tail", "-f", "/dev/null"]
+      dnsRecord: true
+      networks:
+        - default
+      resources:
+        limits:
+          memory: "2Gi"
+          cpu: "500m"
+        requests:
+          memory: "2Gi"
+          cpu: "500m"
+    
+    nginx:
+      image: nginx:latest
+      runtimeClassName: CLUSTER_DEFAULT
+      dnsRecord: true
+      networks:
+        - default
+      resources:
+        limits:
+          memory: "512Mi"
+          cpu: "250m"
+        requests:
+          memory: "256Mi"
+          cpu: "100m"
+  
+  # Define volumes to be used by services
+  volumes:
+    shared-data:
+      size: 5Gi
