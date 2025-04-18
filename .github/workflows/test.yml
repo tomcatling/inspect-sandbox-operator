@@ -1,0 +1,16 @@
+name: Test using Pytest
+
+on:
+  workflow_call:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install -g @devcontainers/cli@v0.30.0
+      - run: devcontainer up --workspace-folder=.
+      - run: devcontainer exec --workspace-folder=. make docker-build
+      - run: devcontainer exec --workspace-folder=. minikube image load inspect-sandbox-operator:latest 
+      - run: devcontainer exec --workspace-folder=. helm install inspect-sandbox-operator charts/inspect-sandbox-operator/
+      - run: devcontainer exec --workspace-folder=. kubectl apply -f config/samples/inspect_v1alpha1_inspectsandbox.yaml
