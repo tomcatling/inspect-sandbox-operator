@@ -28,6 +28,7 @@ jobs:
 
       - name: Setup Helm Chart Repository
         run: |
+          # Create required directories
           mkdir -p .cr-release-packages
           mkdir -p .cr-index
           
@@ -37,14 +38,22 @@ jobs:
           # Generate the index file
           helm repo index .cr-release-packages --url https://tomcatling.github.io/inspect-sandbox-operator/
           
-          # Copy to gh-pages branch
-          git checkout --orphan gh-pages || git checkout gh-pages
+          # Create a fresh gh-pages branch
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          
+          # Force create a brand new gh-pages branch without history
+          git checkout --orphan gh-pages-temp
           git reset --hard
           rm -rf *
+          
+          # Copy chart files
           cp .cr-release-packages/* .
           cp .cr-release-packages/index.yaml .
           
-          # Commit and push
+          # Commit
           git add .
-          git commit -m "Publish Helm chart"
-          git push --force origin gh-pages
+          git commit -m "Publish Helm chart" || echo "No changes to commit"
+          
+          # Force push the new branch as gh-pages (completely replacing previous content)
+          git push --force origin gh-pages-temp:gh-pages
