@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'charts/**'
+      - '.github/workflows/helm-release.yml'
 
 jobs:
   release:
