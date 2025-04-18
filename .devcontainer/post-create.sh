@@ -41,6 +41,3 @@ echo "Installing Cilium..."
 cilium install
 cilium status --wait
 cilium hubble enable --ui
-
-echo "Installing poetry environment..."
-poetry install
