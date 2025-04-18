@@ -17,7 +17,13 @@ jobs:
       
       # Install the Helm chart
       - name: Install Helm chart
-        run: devcontainer exec --workspace-folder=. helm install -n inspect-system inspect-sandbox-operator charts/inspect-sandbox-operator/ --create-namespace
+        run: |
+          devcontainer exec --workspace-folder=. \
+            helm install -n inspect-system \
+            inspect-sandbox-operator \
+            charts/inspect-sandbox-operator/ \
+            --create-namespace \
+            --set deployment.image=inspect-sandbox-operator:latest 
       
       # Wait for operator to be ready
       - name: Wait for operator deployment
