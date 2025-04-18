@@ -35,21 +35,34 @@ jobs:
           # Package the chart
           helm package charts/inspect-sandbox-operator -d .cr-release-packages
           
-          # Generate the index file
-          helm repo index --url https://tomcatling.github.io/inspect-sandbox-operator/ .
+          # Check if helm-release branch exists
+          if git ls-remote --heads origin helm-release | grep -q 'refs/heads/helm-release'; then
+            # If it exists, check it out
+            git checkout helm-release
+          else
+            # If it doesn't exist, create a new orphan branch
+            git checkout --orphan helm-release
+            git reset --hard
+            rm -rf *
+            # Create an empty index.yaml to start with
+            touch index.yaml
+            git add index.yaml
+            git commit -m "Initialize helm-release branch"
+          fi
           
-          # Create a fresh gh-pages branch
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions"
+          # Move the packaged chart to the current directory
+          cp .cr-release-packages/*.tgz .
           
-          # Force create a brand new gh-pages branch without history
-          git checkout --orphan gh-pages-temp
-          git reset --hard
-          rm -rf *
+          # Merge the new chart into the existing index or create a new one if it doesn't exist
+          if [ -f "index.yaml" ]; then
+            helm repo index --url https://tomcatling.github.io/inspect-sandbox-operator/ --merge index.yaml .
+          else
+            helm repo index --url https://tomcatling.github.io/inspect-sandbox-operator/ .
+          fi
           
-          # Commit
+          # Commit changes
           git add .
-          git commit -m "Publish Helm chart" || echo "No changes to commit"
+          git commit -m "Publish Helm chart $(date '+%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
           
-          # Force push the new branch as gh-pages (completely replacing previous content)
-          git push --force origin gh-pages-temp:gh-pages
+          # Push updates to helm-release branch
+          git push origin helm-release
