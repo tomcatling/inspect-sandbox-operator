@@ -34,6 +34,9 @@ make deploy
 
 # Or using a pre-built image
 kubectl apply -f config/deploy/operator.yaml
+
+# Or using the GitHub Container Registry image
+kubectl apply -f config/deploy/operator-ghcr.yaml
 ```
 
 ### Creating an InspectSandbox
@@ -48,7 +51,7 @@ kubectl apply -f config/samples/inspect_v1alpha1_inspectsandbox.yaml
 
 ```bash
 # Clone the repository
-git clone https://github.com/example/inspect-operator.git
+git clone https://github.com/tomcatling/inspect-operator.git
 cd inspect-operator
 
 # Install dependencies
@@ -65,6 +68,17 @@ make run
 
 ```bash
 go test ./... -v
+```
+
+### Container Image
+
+The operator container image is automatically built and published to GitHub Container Registry 
+on pushes to the main branch and when tags are created.
+
+You can pull the image using:
+
+```bash
+docker pull ghcr.io/tomcatling/inspect-operator:latest
 ```
 
 ## Converting from Helm chart
