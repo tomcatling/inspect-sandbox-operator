@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-crd-test"
+  labels:
+    app.kubernetes.io/name: {{ include "inspect-sandbox-operator.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    "helm.sh/hook-weight": "5"
+spec:
+  serviceAccountName: {{ include "inspect-sandbox-operator.serviceAccountName" . }}
+  containers:
+    - name: crd-test
+      image: bitnami/kubectl:latest
+      command:
+        - sh
+        - -c
+        - |
+          echo "Testing InspectSandbox CRD functionality..."
+          
+          # Create a test sandbox
+          cat > test-sandbox.yaml << EOF
+          apiVersion: inspect.example.com/v1alpha1
+          kind: InspectSandbox
+          metadata:
+            name: test-sandbox
+          spec:
+            allowDomains:
+              - "example.com"
+            networks:
+              test: "test network"
+            services:
+              nginx:
+                image: nginx:alpine
+                runtimeClassName: CLUSTER_DEFAULT
+                dnsRecord: true
+                networks:
+                  - test
+                resources:
+                  limits:
+                    memory: "128Mi"
+                    cpu: "100m"
+                  requests:
+                    memory: "64Mi"
+                    cpu: "50m"
+          EOF
+          
+          kubectl apply -f test-sandbox.yaml
+          if [ $? -ne 0 ]; then
+            echo "❌ Failed to create test InspectSandbox"
+            exit 1
+          fi
+          
+          echo "Waiting for resources to be created..."
+          sleep 10
+          
+          # Check if StatefulSet was created
+          kubectl get statefulset test-sandbox-nginx
+          if [ $? -ne 0 ]; then
+            echo "❌ StatefulSet not created by operator"
+            exit 1
+          fi
+          
+          # Check if Service was created
+          kubectl get service test-sandbox-nginx
+          if [ $? -ne 0 ]; then
+            echo "❌ Service not created by operator"
+            exit 1
+          fi
+          
+          # Check if network policies were created
+          NETWORK_POLICY=$(kubectl get ciliumnetworkpolicies test-sandbox-egress -o jsonpath='{.metadata.name}' 2>/dev/null)
+          if [ -z "$NETWORK_POLICY" ]; then
+            echo "⚠️ Network policy not found, but this might be expected if Cilium is not installed"
+          fi
+          
+          # Wait for pod to be created
+          POD_NAME=$(kubectl get pods -l app.kubernetes.io/instance=test-sandbox -l app.kubernetes.io/component=nginx -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+          if [ -z "$POD_NAME" ]; then
+            echo "⚠️ Pod not found yet, but StatefulSet exists"
+          else
+            echo "Pod $POD_NAME created successfully"
+          fi
+          
+          # Check status of InspectSandbox
+          STATUS=$(kubectl get inspectsandbox test-sandbox -o jsonpath='{.status.services.nginx.ready}' 2>/dev/null)
+          echo "Service status: $STATUS"
+          
+          # Clean up the test resources
+          kubectl delete inspectsandbox test-sandbox
+          
+          echo "✅ CRD functionality tests passed"
+  restartPolicy: Never

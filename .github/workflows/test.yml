@@ -1,4 +1,4 @@
-name: Test using Pytest
+name: Test InspectSandbox Operator
 
 on:
   workflow_call:
@@ -12,5 +12,19 @@ jobs:
       - run: devcontainer up --workspace-folder=.
       - run: devcontainer exec --workspace-folder=. make docker-build
       - run: devcontainer exec --workspace-folder=. minikube image load inspect-sandbox-operator:latest 
-      - run: devcontainer exec --workspace-folder=. helm install inspect-sandbox-operator charts/inspect-sandbox-operator/
-      - run: devcontainer exec --workspace-folder=. kubectl apply -f examples/inspect_v1alpha1_inspectsandbox.yaml
+      
+      # Install the Helm chart
+      - name: Install Helm chart
+        run: devcontainer exec --workspace-folder=. helm install -n inspect-system inspect-sandbox-operator charts/inspect-sandbox-operator/ --create-namespace
+      
+      # Wait for operator to be ready
+      - name: Wait for operator deployment
+        run: devcontainer exec --workspace-folder=. kubectl wait --for=condition=available --timeout=60s deployment/inspect-sandbox-operator -n inspect-system
+      
+      # Run Helm tests
+      - name: Run Helm tests
+        run: devcontainer exec --workspace-folder=. helm test inspect-sandbox-operator -n inspect-system
+      
+      # Deploy example CR for visual inspection
+      - name: Apply example CR
+        run: devcontainer exec --workspace-folder=. kubectl apply -f examples/inspect_v1alpha1_inspectsandbox.yaml
