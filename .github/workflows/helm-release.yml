@@ -7,6 +7,11 @@ on:
     paths:
       - 'charts/**'
       - '.github/workflows/helm-release.yml'
+  # Add trigger for tag creation
+  create:
+    tags:
+      - 'v*'
+      - '*-release'
 
 jobs:
   release:
@@ -27,18 +32,42 @@ jobs:
         with:
           version: v3.10.0
 
+      - name: Extract version from Git tag
+        id: extract-version
+        run: |
+          # Get the latest tag that matches our version pattern (v* or *-release)
+          LATEST_TAG=$(git describe --tags --abbrev=0 --match="v*" 2>/dev/null || git describe --tags --abbrev=0 --match="*-release" 2>/dev/null || echo "")
+          
+          if [ -z "$LATEST_TAG" ]; then
+            # If no tag found, use a fallback versioning scheme
+            COMMIT_COUNT=$(git rev-list --count HEAD)
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            CHART_VERSION="0.1.0-dev.${COMMIT_COUNT}+${SHORT_SHA}"
+            echo "No release tag found. Using generated version: $CHART_VERSION"
+          else
+            # Extract version number from tag (removing leading 'v' if present)
+            CHART_VERSION=$(echo $LATEST_TAG | sed 's/^v//' | sed 's/-release$//')
+            echo "Using version from tag: $CHART_VERSION"
+          fi
+          
+          # Set output for later steps
+          echo "chart_version=$CHART_VERSION" >> $GITHUB_OUTPUT
+
       - name: Setup Helm Chart Repository
         run: |
-          # Package the chart
+          # Update chart version in Chart.yaml
+          sed -i "s/^version:.*/version: ${{ steps.extract-version.outputs.chart_version }}/" charts/inspect-sandbox-operator/Chart.yaml
+          
+          # Package the chart with the extracted version
           helm package charts/inspect-sandbox-operator -d /tmp
           
-          # Check if helm-releases branch exists
-          if git ls-remote --heads origin helm-releases | grep -q 'refs/heads/helm-releases'; then
+          # Check if gh-pages branch exists
+          if git ls-remote --heads origin gh-pages | grep -q 'refs/heads/gh-pages'; then
             # If it exists, check it out
-            git checkout helm-releases
+            git checkout gh-pages
           else
             # If it doesn't exist, create a new orphan branch
-            git checkout --orphan helm-releases
+            git checkout --orphan gh-pages
             git reset --hard
             rm -rf *
           fi
@@ -57,5 +86,5 @@ jobs:
           git add .
           git commit -m "Publish Helm chart $(date '+%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
           
-          # Push changes to helm-releases branch (not force push)
-          git push origin helm-releases
+          # Push changes to gh-pages branch (not force push)
+          git push origin gh-pages
