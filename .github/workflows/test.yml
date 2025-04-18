@@ -7,10 +7,24 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: latest
+          labels: inspect-sandbox-operator
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
       - run: npm install -g @devcontainers/cli@v0.30.0
       - run: devcontainer up --workspace-folder=.
-      - run: devcontainer exec --workspace-folder=. make docker-build
       - run: devcontainer exec --workspace-folder=. minikube image load inspect-sandbox-operator:latest 
       
       # Install the Helm chart

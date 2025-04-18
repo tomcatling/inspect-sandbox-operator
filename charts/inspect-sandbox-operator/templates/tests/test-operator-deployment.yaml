@@ -3,13 +3,13 @@ kind: Pod
 metadata:
   name: "{{ .Release.Name }}-operator-test"
   labels:
-    app.kubernetes.io/name: {{ include "inspect-sandbox-operator.name" . }}
+    app.kubernetes.io/name: {{ .Values.serviceAccount.name }}
     app.kubernetes.io/instance: {{ .Release.Name }}
   annotations:
     "helm.sh/hook": test
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
-  serviceAccountName: {{ include "inspect-sandbox-operator.serviceAccountName" . }}
+  serviceAccountName: serviceAccountName: {{ .Values.serviceAccount.name }}
   containers:
     - name: operator-test
       image: bitnami/kubectl:latest
@@ -20,8 +20,8 @@ spec:
           echo "Testing inspect-sandbox-operator deployment..."
           
           # Verify operator pod is running
-          kubectl -n {{ .Values.namespace.name }} get pods -l app.kubernetes.io/name=inspect-sandbox-operator -o wide
-          OPERATOR_POD=$(kubectl -n {{ .Values.namespace.name }} get pods -l app.kubernetes.io/name=inspect-sandbox-operator -o jsonpath='{.items[0].metadata.name}')
+          kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/name=inspect-sandbox-operator -o wide
+          OPERATOR_POD=$(kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/name=inspect-sandbox-operator -o jsonpath='{.items[0].metadata.name}')
           
           if [ -z "$OPERATOR_POD" ]; then
             echo "❌ Failed to find operator pod"
@@ -29,7 +29,7 @@ spec:
           fi
           
           # Check if operator is ready
-          READY=$(kubectl -n {{ .Values.namespace.name }} get pod $OPERATOR_POD -o jsonpath='{.status.containerStatuses[0].ready}')
+          READY=$(kubectl -n {{ .Release.Namespace }} get pod $OPERATOR_POD -o jsonpath='{.status.containerStatuses[0].ready}')
           if [ "$READY" != "true" ]; then
             echo "❌ Operator pod is not ready"
             exit 1

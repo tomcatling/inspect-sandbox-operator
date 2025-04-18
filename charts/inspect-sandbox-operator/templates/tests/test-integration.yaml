@@ -3,14 +3,14 @@ kind: Pod
 metadata:
   name: "{{ .Release.Name }}-integration-test"
   labels:
-    app.kubernetes.io/name: {{ include "inspect-sandbox-operator.name" . }}
+    app.kubernetes.io/name: {{ .Values.serviceAccount.name }}
     app.kubernetes.io/instance: {{ .Release.Name }}
   annotations:
     "helm.sh/hook": test
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
     "helm.sh/hook-weight": "10"
 spec:
-  serviceAccountName: {{ include "inspect-sandbox-operator.serviceAccountName" . }}
+  serviceAccountName: {{ .Values.serviceAccount.name }}
   containers:
     - name: integration-test
       image: bitnami/kubectl:latest
