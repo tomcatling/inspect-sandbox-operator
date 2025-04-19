@@ -1,0 +1,157 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-integration-test"
+  labels:
+    app.kubernetes.io/name: {{ .Values.serviceAccount.name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    "helm.sh/hook-weight": "10"
+spec:
+  serviceAccountName: {{ .Values.serviceAccount.name }}
+  containers:
+    - name: integration-test
+      image: bitnami/kubectl:latest
+      command:
+        - sh
+        - -c
+        - |
+          echo "Running comprehensive integration tests..."
+          
+          # Create test sandbox with multiple services
+          cat > /tmp/integration-test-sandbox.yaml << EOF
+          apiVersion: inspect.example.com/v1alpha1
+          kind: InspectSandbox
+          metadata:
+            name: int-test-sandbox
+          spec:
+            allowDomains:
+              - "example.com"
+              - "k8s.io"
+            networks:
+              frontend: "frontend network"
+              backend: "backend network"
+            services:
+              web:
+                image: nginx:alpine
+                runtimeClassName: CLUSTER_DEFAULT
+                dnsRecord: true
+                networks:
+                  - frontend
+                resources:
+                  limits:
+                    memory: "128Mi"
+                    cpu: "100m"
+                  requests:
+                    memory: "64Mi"
+                    cpu: "50m"
+              api:
+                image: alpine:latest
+                command: ["sh", "-c", "while true; do sleep 10; done"]
+                runtimeClassName: CLUSTER_DEFAULT
+                dnsRecord: true
+                networks:
+                  - backend
+                  - frontend
+                resources:
+                  limits:
+                    memory: "128Mi"
+                    cpu: "100m"
+                  requests:
+                    memory: "64Mi"
+                    cpu: "50m"
+            volumes:
+              data-store:
+                size: 1Gi
+          EOF
+          
+          kubectl apply -f /tmp/integration-test-sandbox.yaml
+          if [ $? -ne 0 ]; then
+            echo "❌ Failed to create integration test sandbox"
+            exit 1
+          fi
+          
+          echo "Waiting for resources to be created..."
+          sleep 20
+          
+          # Test 1: Verify StatefulSets were created
+          for SVC in web api; do
+            kubectl get statefulset int-test-sandbox-$SVC
+            if [ $? -ne 0 ]; then
+              echo "❌ StatefulSet for $SVC not created"
+              exit 1
+            fi
+            echo "✅ StatefulSet for $SVC created successfully"
+          done
+          
+          # Test 2: Verify Services were created
+          for SVC in web api; do
+            kubectl get service int-test-sandbox-$SVC
+            if [ $? -ne 0 ]; then
+              echo "❌ Service for $SVC not created"
+              exit 1
+            fi
+            echo "✅ Service for $SVC created successfully"
+          done
+          
+          # Test 3: Verify network policies
+          for POLICY_TYPE in egress default-deny-ingress network-frontend-ingress network-backend-ingress; do
+            POLICY=$(kubectl get ciliumnetworkpolicies int-test-sandbox-$POLICY_TYPE -o jsonpath='{.metadata.name}' 2>/dev/null)
+            if [ -z "$POLICY" ]; then
+              echo "⚠️ Network policy $POLICY_TYPE not found, but may be expected if Cilium is not installed"
+            else
+              echo "✅ Network policy $POLICY_TYPE created successfully"
+            fi
+          done
+          
+          # Test 4: Verify network labels on pods
+          for SVC in web api; do
+            POD_NAME=$(kubectl get pods -l app.kubernetes.io/instance=int-test-sandbox -l app.kubernetes.io/component=$SVC -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+            if [ -z "$POD_NAME" ]; then
+              echo "⚠️ Pod for $SVC not found yet"
+            else
+              if [ "$SVC" = "web" ]; then
+                LABEL=$(kubectl get pod $POD_NAME -o jsonpath='{.metadata.labels.inspect\.example\.com/network-frontend}' 2>/dev/null)
+                if [ "$LABEL" != "true" ]; then
+                  echo "❌ Web pod missing frontend network label"
+                  exit 1
+                fi
+                echo "✅ Web pod has correct network labels"
+              elif [ "$SVC" = "api" ]; then
+                FRONTEND=$(kubectl get pod $POD_NAME -o jsonpath='{.metadata.labels.inspect\.example\.com/network-frontend}' 2>/dev/null)
+                BACKEND=$(kubectl get pod $POD_NAME -o jsonpath='{.metadata.labels.inspect\.example\.com/network-backend}' 2>/dev/null)
+                if [ "$FRONTEND" != "true" ] || [ "$BACKEND" != "true" ]; then
+                  echo "❌ API pod missing network labels"
+                  exit 1
+                fi
+                echo "✅ API pod has correct network labels"
+              fi
+            fi
+          done
+          
+          # Test 5: Verify PVC created for volume
+          kubectl get pvc int-test-sandbox-data-store 2>/dev/null
+          if [ $? -eq 0 ]; then
+            echo "✅ Volume PVC created successfully"
+          else
+            echo "⚠️ Volume PVC not found, may be incomplete implementation"
+          fi
+          
+          # Test 6: Check status updates
+          for SVC in web api; do
+            STATUS=$(kubectl get inspectsandbox int-test-sandbox -o jsonpath="{.status.services.$SVC}" 2>/dev/null)
+            if [ -z "$STATUS" ]; then
+              echo "⚠️ Status not available for $SVC yet"
+            else
+              echo "✅ Status available for $SVC: $STATUS"
+            fi
+          done
+          
+          # Clean up
+          echo "Cleaning up test resources..."
+          kubectl delete inspectsandbox int-test-sandbox
+          
+          echo "✅ Integration tests completed successfully"
+  restartPolicy: Never

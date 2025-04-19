@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.serviceAccount.name }}
-  namespace: {{ .Values.namespace.name }}
+  namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: {{ .Values.serviceAccount.name }}
 spec:

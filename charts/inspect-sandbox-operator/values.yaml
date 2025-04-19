@@ -1,10 +1,5 @@
 # Default values for inspect-sandbox-operator
 
-# Namespace settings
-namespace:
-  create: true
-  name: "inspect-system"
-
 # Deployment configuration
 deployment:
   replicas: 1
@@ -27,7 +22,7 @@ rbac:
 # ServiceAccount settings
 serviceAccount:
   create: true
-  name: "inspect-operator"
+  name: "inspect-sandbox-operator"
 
 # CRD settings
 crds:

@@ -59,7 +59,7 @@ kubectl apply -f config/deploy/operator-ghcr.yaml
 ### Creating an InspectSandbox
 
 ```bash
-kubectl apply -f config/samples/inspect_v1alpha1_inspectsandbox.yaml
+kubectl apply -f examples/inspect_v1alpha1_inspectsandbox.yaml
 ```
 
 ## Development
