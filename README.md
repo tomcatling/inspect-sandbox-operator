@@ -95,7 +95,7 @@ on pushes to the main branch and when tags are created.
 You can pull the image using:
 
 ```bash
-docker pull ghcr.io/tomcatling/inspect-operator:latest
+docker pull ghcr.io/tomcatling/inspect-sandbox-operator:latest
 ```
 
 ## Converting from Helm chart
