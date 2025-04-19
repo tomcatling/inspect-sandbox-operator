@@ -21,7 +21,7 @@ spec:
           echo "Running comprehensive integration tests..."
           
           # Create test sandbox with multiple services
-          cat > integration-test-sandbox.yaml << EOF
+          cat > /tmp/integration-test-sandbox.yaml << EOF
           apiVersion: inspect.example.com/v1alpha1
           kind: InspectSandbox
           metadata:
@@ -67,7 +67,7 @@ spec:
                 size: 1Gi
           EOF
           
-          kubectl apply -f integration-test-sandbox.yaml
+          kubectl apply -f /tmp/integration-test-sandbox.yaml
           if [ $? -ne 0 ]; then
             echo "❌ Failed to create integration test sandbox"
             exit 1

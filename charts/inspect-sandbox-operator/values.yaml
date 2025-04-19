@@ -22,7 +22,7 @@ rbac:
 # ServiceAccount settings
 serviceAccount:
   create: true
-  name: "inspect-operator"
+  name: "inspect-sandbox-operator"
 
 # CRD settings
 crds:

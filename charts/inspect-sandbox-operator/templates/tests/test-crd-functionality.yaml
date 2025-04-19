@@ -21,7 +21,7 @@ spec:
           echo "Testing InspectSandbox CRD functionality..."
           
           # Create a test sandbox
-          cat > test-sandbox.yaml << EOF
+          cat > /tmp/test-sandbox.yaml << EOF
           apiVersion: inspect.example.com/v1alpha1
           kind: InspectSandbox
           metadata:
@@ -47,7 +47,7 @@ spec:
                     cpu: "50m"
           EOF
           
-          kubectl apply -f test-sandbox.yaml
+          kubectl apply -f /tmp/test-sandbox.yaml
           if [ $? -ne 0 ]; then
             echo "❌ Failed to create test InspectSandbox"
             exit 1

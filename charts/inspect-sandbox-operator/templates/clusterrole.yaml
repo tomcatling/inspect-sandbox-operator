@@ -4,6 +4,9 @@ kind: ClusterRole
 metadata:
   name: {{ .Values.serviceAccount.name }}-role
 rules:
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 - apiGroups: ["inspect.example.com"]
   resources: ["inspectsandboxes", "inspectsandboxes/status", "inspectsandboxes/finalizers"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
@@ -11,7 +14,7 @@ rules:
   resources: ["statefulsets"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 - apiGroups: [""]
-  resources: ["services", "configmaps", "persistentvolumeclaims"]
+  resources: ["services", "configmaps", "persistentvolumeclaims", "pods"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 - apiGroups: ["cilium.io"]
   resources: ["ciliumnetworkpolicies"]
